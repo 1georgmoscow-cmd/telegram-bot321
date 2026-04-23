@@ -107,6 +107,7 @@ async def pick_date(callback: CallbackQuery, db: Database, state: FSMContext) ->
 @router.callback_query(StateFilter(None), F.data.startswith("pick_time:"))
 async def pick_time(callback: CallbackQuery, state: FSMContext) -> None:
     _, date_str, time_str = callback.data.split(":")
+
     await state.update_data(chosen_date=date_str, chosen_time=time_str)
     await state.set_state(BookingStates.waiting_for_name)
 
@@ -116,17 +117,19 @@ async def pick_time(callback: CallbackQuery, state: FSMContext) -> None:
         "Введите ваше имя:",
         parse_mode="HTML",
     )
-    await callback.answer()
+
+    await callback.answer()  # 👈 ВОТ ЭТО ДОБАВЬ
 
 
-@router.message(BookingStates.waiting_for_name)
+@router.message(StateFilter(BookingStates.waiting_for_name))
 async def get_name(message: Message, state: FSMContext) -> None:
+    print("NAME RECEIVED:", message.text)
     await state.update_data(name=message.text.strip())
     await state.set_state(BookingStates.waiting_for_phone)
     await message.answer("Введите номер телефона (например, +79991234567):")
 
 
-@router.message(BookingStates.waiting_for_phone)
+@router.message(StateFilter(BookingStates.waiting_for_phone))
 async def get_phone(message: Message, state: FSMContext) -> None:
     phone = message.text.strip()
     data = await state.get_data()
@@ -143,7 +146,7 @@ async def get_phone(message: Message, state: FSMContext) -> None:
     )
 
 
-@router.callback_query(BookingStates.waiting_for_phone, F.data == "confirm_booking")
+@router.callback_query(F.data == "confirm_booking")
 async def confirm_booking(
     callback: CallbackQuery,
     state: FSMContext,
