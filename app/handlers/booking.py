@@ -104,21 +104,26 @@ async def pick_date(callback: CallbackQuery, db: Database, state: FSMContext) ->
     await callback.answer()
 
 
-@router.callback_query(StateFilter(None), F.data.startswith("pick_time:"))
-async def pick_time(callback: CallbackQuery, state: FSMContext) -> None:
-    _, date_str, time_str = callback.data.split(":")
+@router.callback_query(F.data.startswith("pick_time:"))
+async def pick_time(callback: CallbackQuery, state: FSMContext):
+
+    try:
+        _, date_str, time_str = callback.data.split(":")
+    except ValueError:
+        await callback.answer("Ошибка данных", show_alert=True)
+        return
 
     await state.update_data(chosen_date=date_str, chosen_time=time_str)
     await state.set_state(BookingStates.waiting_for_name)
 
     await callback.message.edit_text(
-        f"<b>Дата:</b> {format_ru_date(date_str)}\n"
+        f"<b>Дата:</b> {date_str}\n"
         f"<b>Время:</b> {time_str}\n\n"
         "Введите ваше имя:",
         parse_mode="HTML",
     )
 
-    await callback.answer()  # 👈 ВОТ ЭТО ДОБАВЬ
+    await callback.answer()
 
 
 @router.message(StateFilter(BookingStates.waiting_for_name))
