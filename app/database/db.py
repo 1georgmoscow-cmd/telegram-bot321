@@ -61,6 +61,16 @@ class Database:
                     (date_str,),
                 )
 
+                # 👇 ВОТ ЭТО ДОБАВЬ
+                for time in ["10:00", "11:00", "12:00", "13:00"]:
+                    conn.execute(
+                        """
+                        INSERT OR IGNORE INTO time_slots(date, time, is_active)
+                        VALUES(?, ?, 1)
+                        """,
+                        (date_str, time),
+                    )
+
             conn.commit()
 
             rows = conn.execute(
